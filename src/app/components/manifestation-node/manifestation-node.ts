@@ -18,6 +18,8 @@ export class ManifestationNodeComponent {
 
   @Output() updated = new EventEmitter<void>();
   @Output() drillIn = new EventEmitter<ManifestationNode>();
+  @Output() edit = new EventEmitter<ManifestationNode>();
+  @Output() delete = new EventEmitter<ManifestationNode>();
 
   private service = inject(ManifestationService);
   private progressService = inject(ProgressService);
@@ -27,6 +29,16 @@ export class ManifestationNodeComponent {
 
   onCardClick() {
     this.drillIn.emit(this.node);
+  }
+
+  onEditClick(event: Event) {
+    event.stopPropagation();
+    this.edit.emit(this.node);
+  }
+
+  onDeleteClick(event: Event) {
+    event.stopPropagation();
+    this.delete.emit(this.node);
   }
 
   async changeStatus(newStatus: StatusEnum) {

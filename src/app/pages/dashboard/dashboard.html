@@ -1,331 +1,496 @@
 <div class="dashboard-container" [class.sidebar-collapsed]="isSidebarCollapsed">
-    <!-- Top Header -->
-    <header class="dashboard-header">
-        <div class="brand">
-            <button class="sidebar-toggle" (click)="toggleSidebar()">
-                <span class="toggle-icon">☰</span>
-            </button>
-            <div class="logo">🏆</div>
-            <h2>The Staircase</h2>
-        </div>
-        <div class="stats">
-            <div class="points-badge">
-                <span class="points-label">Total Points</span>
-                <span class="points-value">{{ totalPoints }} pts</span>
-            </div>
-            <button class="btn-secondary header-btn" (click)="logout()">Sign Out</button>
-        </div>
-    </header>
+  <!-- Top Header -->
+  <header class="dashboard-header">
+    <div class="brand">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <span class="toggle-icon">☰</span>
+      </button>
+      <div class="logo">🏆</div>
+      <h2>The Staircase</h2>
+    </div>
+    <div class="stats">
+      <div class="points-badge">
+        <span class="points-label">Total Points</span>
+        <span class="points-value">{{ totalPoints }} pts</span>
+      </div>
+      <button class="btn-secondary header-btn" (click)="logout()">Sign Out</button>
+    </div>
+  </header>
 
-    <!-- Sidebar: All Roadmaps List -->
-    <aside class="sidebar" [class.mobile-open]="isMobileSidebarOpen">
-        <button class="btn-primary sidebar-add-btn" (click)="openNewRoadmapDialog()">
-            + New Roadmap
+  <!-- Sidebar: All Roadmaps List -->
+  <aside class="sidebar" [class.mobile-open]="isMobileSidebarOpen">
+    <button class="btn-primary sidebar-add-btn" (click)="openNewRoadmapDialog()">
+      + New Roadmap
+    </button>
+
+    <div class="sidebar-search">
+      <input
+        type="text"
+        class="sidebar-search-input"
+        placeholder="Search roadmaps..."
+        [(ngModel)]="searchQuery"
+        (input)="filterRoadmaps()"
+      />
+    </div>
+
+    <div class="sidebar-section" *ngIf="filteredActiveBuilds.length > 0">
+      <div class="sidebar-section-title">🔥 Active Builds</div>
+      <div
+        class="sidebar-item"
+        *ngFor="let node of filteredActiveBuilds"
+        [class.active]="selectedRoadmap?.id === node.id"
+        (click)="selectRoadmap(node)"
+      >
+        <span class="status-dot progress"></span>
+        <span class="item-title">{{ node.title }}</span>
+        <span class="item-progress">{{ node.progress }}%</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" *ngIf="filteredBlueprints.length > 0">
+      <div class="sidebar-section-title">🌌 Blueprints</div>
+      <div
+        class="sidebar-item"
+        *ngFor="let node of filteredBlueprints"
+        [class.active]="selectedRoadmap?.id === node.id"
+        (click)="selectRoadmap(node)"
+      >
+        <span class="status-dot planning"></span>
+        <span class="item-title">{{ node.title }}</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" *ngIf="filteredHallOfFame.length > 0">
+      <div class="sidebar-section-title">🏛️ Hall of Fame</div>
+      <div
+        class="sidebar-item"
+        *ngFor="let node of filteredHallOfFame"
+        [class.active]="selectedRoadmap?.id === node.id"
+        (click)="selectRoadmap(node)"
+      >
+        <span class="status-dot completed"></span>
+        <span class="item-title">{{ node.title }}</span>
+        <span class="item-progress" *ngIf="node.points">+{{ node.points }}pts</span>
+      </div>
+    </div>
+
+    <div class="sidebar-empty" *ngIf="allRoadmaps.length === 0">
+      <p>No roadmaps yet</p>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Welcome: no roadmaps -->
+    <div class="welcome-state" *ngIf="!currentViewNode && allRoadmaps.length === 0">
+      <div class="welcome-icon">🚀</div>
+      <h2>Begin Your Staircase</h2>
+      <p class="welcome-subtitle">
+        Create your first roadmap to start turning visions into victories.
+      </p>
+      <button class="btn-primary" (click)="openNewRoadmapDialog()">+ Create First Roadmap</button>
+    </div>
+
+    <!-- Welcome: has roadmaps but none selected -->
+    <div class="welcome-state" *ngIf="!currentViewNode && allRoadmaps.length > 0">
+      <div class="welcome-icon">👈</div>
+      <h2>Select a Roadmap</h2>
+      <p class="welcome-subtitle">Pick a roadmap from the sidebar to view its structure.</p>
+    </div>
+
+    <!-- ════════ DETAIL VIEW ════════ -->
+    <div *ngIf="currentViewNode" class="detail-view">
+      <!-- ── Breadcrumb Navigation ── -->
+      <nav class="breadcrumb-nav" *ngIf="breadcrumb.length > 1">
+        <span
+          class="breadcrumb-item"
+          *ngFor="let crumb of breadcrumb; let i = index; let last = last"
+          [class.current]="last"
+          (click)="!last && navigateToBreadcrumb(i)"
+        >
+          <span class="breadcrumb-level-tag" [ngClass]="'bc-level-' + crumb.level">{{
+            getLevelName(crumb.level)
+          }}</span>
+          {{ crumb.title }}
+          <span class="breadcrumb-sep" *ngIf="!last">›</span>
+        </span>
+      </nav>
+
+      <!-- ── Detail Header ── -->
+      <div class="detail-header">
+        <div class="detail-header-left">
+          <button class="back-btn" *ngIf="breadcrumb.length > 1" (click)="goBack()" title="Go back">
+            ←
+          </button>
+          <div class="detail-header-content">
+            <div class="detail-badges">
+              <span class="detail-level-badge" [ngClass]="'level-color-' + currentViewNode.level">
+                {{ getLevelName(currentViewNode.level) }}
+              </span>
+              <span class="detail-status-chip" [ngClass]="'dstatus-' + currentViewNode.status">
+                {{ getStatusLabel(currentViewNode.status) }}
+              </span>
+            </div>
+            <h2 class="detail-title">{{ currentViewNode.title }}</h2>
+            <p class="detail-description" *ngIf="currentViewNode.description">
+              {{ currentViewNode.description }}
+            </p>
+            <div class="detail-meta">
+              <span class="detail-meta-badge" *ngIf="currentViewNode.dueDate">
+                📅 {{ currentViewNode.dueDate | date : 'mediumDate' }}
+              </span>
+              <a
+                class="detail-meta-badge link"
+                *ngIf="currentViewNode.url"
+                [href]="currentViewNode.url"
+                target="_blank"
+              >
+                🔗 Reference
+              </a>
+              <span class="detail-meta-badge" *ngIf="currentViewNode.customField1">
+                🏷️ {{ currentViewNode.customField1 }}
+              </span>
+              <span class="detail-meta-badge" *ngIf="currentViewNode.customField2">
+                💪 {{ currentViewNode.customField2 }}
+              </span>
+              <span
+                class="detail-meta-badge"
+                *ngIf="currentViewNode.points && currentViewNode.status !== StatusEnum.COMPLETED"
+              >
+                🎯 {{ currentViewNode.points }} pts
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-header-right">
+          <button class="btn-edit-node" (click)="editCurrentNode()" title="Edit details">
+            ✏️ Edit
+          </button>
+          <button
+            class="btn-delete-node"
+            (click)="confirmDeleteCurrentNode()"
+            title="Delete this item"
+          >
+            🗑️ Delete
+          </button>
+          <span class="detail-points" *ngIf="currentViewNode.status === StatusEnum.COMPLETED">
+            +{{ currentViewNode.points }} pts 🏆
+          </span>
+        </div>
+      </div>
+
+      <!-- ── Progress Bar ── -->
+      <div
+        class="detail-progress"
+        *ngIf="currentViewNode.status !== StatusEnum.COMPLETED && currentChildren.length > 0"
+      >
+        <div class="progress-stats">
+          <span>Progress</span>
+          <span class="progress-percentage">{{ currentViewNode.progress }}%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" [style.width.%]="currentViewNode.progress"></div>
+        </div>
+      </div>
+
+      <!-- ── Action Bar ── -->
+      <div class="detail-actions">
+        <button
+          class="btn-action start-btn"
+          *ngIf="currentViewNode.status === StatusEnum.PLANNING"
+          (click)="startCurrentNode()"
+        >
+          ▶ Start {{ getLevelName(currentViewNode.level) }}
         </button>
+        <button
+          class="btn-action complete-btn"
+          *ngIf="currentViewNode.status === StatusEnum.PROGRESS"
+          (click)="completeCurrentNode()"
+        >
+          ✓ Complete {{ getLevelName(currentViewNode.level) }}
+        </button>
+        <button class="btn-secondary" *ngIf="canAddChildren" (click)="openAddChildDialog()">
+          + Add {{ getChildLevelName(currentViewNode.level) }}
+        </button>
+      </div>
 
-        <div class="sidebar-search">
-            <input type="text" class="sidebar-search-input" placeholder="Search roadmaps..."
-                [(ngModel)]="searchQuery" (input)="filterRoadmaps()">
+      <!-- ════════ KANBAN VIEW (Roadmap → Projects, Project → Sub-Projects) ════════ -->
+      <div *ngIf="showKanban">
+        <h3 class="section-level-heading">
+          <span class="section-level-tag" [ngClass]="'slevel-' + (currentViewNode.level + 1)"
+            >{{ getChildLevelName(currentViewNode.level) }}s</span
+          >
+        </h3>
+        <div class="kanban-board">
+          <!-- Planning Column -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <span class="column-dot planning"></span>
+              <h4>Planning</h4>
+              <span class="column-count">{{
+                getChildrenByStatus(StatusEnum.PLANNING).length
+              }}</span>
+            </div>
+            <div class="kanban-cards">
+              <app-manifestation-node
+                *ngFor="let child of getChildrenByStatus(StatusEnum.PLANNING)"
+                [node]="child"
+                (drillIn)="drillInto($event)"
+                (updated)="onChildUpdated()"
+                (edit)="openEditDialog($event)"
+                (delete)="confirmDelete($event)"
+              >
+              </app-manifestation-node>
+              <button class="add-card-btn" (click)="openAddChildDialog()">
+                + Add {{ getChildLevelName(currentViewNode.level) }}
+              </button>
+            </div>
+          </div>
+
+          <!-- In Progress Column -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <span class="column-dot progress"></span>
+              <h4>In Progress</h4>
+              <span class="column-count">{{
+                getChildrenByStatus(StatusEnum.PROGRESS).length +
+                  getChildrenByStatus(StatusEnum.HOLD).length
+              }}</span>
+            </div>
+            <div class="kanban-cards">
+              <app-manifestation-node
+                *ngFor="let child of getChildrenByStatus(StatusEnum.PROGRESS)"
+                [node]="child"
+                [isActive]="true"
+                (drillIn)="drillInto($event)"
+                (updated)="onChildUpdated()"
+                (edit)="openEditDialog($event)"
+                (delete)="confirmDelete($event)"
+              >
+              </app-manifestation-node>
+              <app-manifestation-node
+                *ngFor="let child of getChildrenByStatus(StatusEnum.HOLD)"
+                [node]="child"
+                (drillIn)="drillInto($event)"
+                (updated)="onChildUpdated()"
+                (edit)="openEditDialog($event)"
+                (delete)="confirmDelete($event)"
+              >
+              </app-manifestation-node>
+            </div>
+          </div>
+
+          <!-- Completed Column -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <span class="column-dot completed"></span>
+              <h4>Completed</h4>
+              <span class="column-count">{{
+                getChildrenByStatus(StatusEnum.COMPLETED).length
+              }}</span>
+            </div>
+            <div class="kanban-cards">
+              <app-manifestation-node
+                *ngFor="let child of getChildrenByStatus(StatusEnum.COMPLETED)"
+                [node]="child"
+                [isCompleted]="true"
+                (drillIn)="drillInto($event)"
+                (updated)="onChildUpdated()"
+                (edit)="openEditDialog($event)"
+                (delete)="confirmDelete($event)"
+              >
+              </app-manifestation-node>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="sidebar-section" *ngIf="filteredActiveBuilds.length > 0">
-            <div class="sidebar-section-title">🔥 Active Builds</div>
-            <div class="sidebar-item"
-                 *ngFor="let node of filteredActiveBuilds"
-                 [class.active]="selectedRoadmap?.id === node.id"
-                 (click)="selectRoadmap(node)">
-                <span class="status-dot progress"></span>
-                <span class="item-title">{{ node.title }}</span>
-                <span class="item-progress">{{ node.progress }}%</span>
-            </div>
+      <!-- ════════ TASK LIST VIEW (Sub-Project → Tasks) ════════ -->
+      <div class="task-list-view" *ngIf="showTaskList">
+        <h3 class="section-level-heading">
+          <span class="section-level-tag slevel-4">Tasks</span>
+        </h3>
+        <div class="task-list-header">
+          <span class="task-col-check"></span>
+          <span class="task-col-title">Task</span>
+          <span class="task-col-status">Status</span>
+          <span class="task-col-priority">Priority</span>
+          <span class="task-col-effort">Effort</span>
+          <span class="task-col-due">Due</span>
+          <span class="task-col-progress">Progress</span>
+          <span class="task-col-action"></span>
+          <span class="task-col-edit"></span>
+          <span class="task-col-delete"></span>
         </div>
-
-        <div class="sidebar-section" *ngIf="filteredBlueprints.length > 0">
-            <div class="sidebar-section-title">🌌 Blueprints</div>
-            <div class="sidebar-item"
-                 *ngFor="let node of filteredBlueprints"
-                 [class.active]="selectedRoadmap?.id === node.id"
-                 (click)="selectRoadmap(node)">
-                <span class="status-dot planning"></span>
-                <span class="item-title">{{ node.title }}</span>
-            </div>
+        <div class="task-list-body">
+          <div
+            class="task-row"
+            *ngFor="let task of getSortedChildren()"
+            [class.task-completed]="task.status === StatusEnum.COMPLETED"
+          >
+            <button
+              class="task-checkbox"
+              [class.checked]="task.status === StatusEnum.COMPLETED"
+              (click)="toggleTaskComplete(task); $event.stopPropagation()"
+            >
+              <span *ngIf="task.status === StatusEnum.COMPLETED">✓</span>
+            </button>
+            <span class="task-title" (click)="drillInto(task)">
+              {{ task.title }}
+              <a class="task-link" *ngIf="task.url" [href]="task.url" target="_blank" (click)="$event.stopPropagation()" title="Open reference">🔗</a>
+            </span>
+            <span
+              class="task-status-chip"
+              [ngClass]="'ts-' + task.status"
+              (click)="cycleTaskStatus(task); $event.stopPropagation()"
+              title="Click to change status"
+            >
+              {{ getStatusLabel(task.status) }}
+            </span>
+            <span class="task-priority">{{ task.customField1 || '—' }}</span>
+            <span class="task-effort">{{ task.customField2 || '—' }}</span>
+            <span class="task-due">{{
+              task.dueDate ? (task.dueDate | date : 'shortDate') : '—'
+            }}</span>
+            <span class="task-progress-cell">
+              <span class="task-progress-bar-track">
+                <span class="task-progress-bar-fill" [style.width.%]="task.progress"></span>
+              </span>
+              <span class="task-progress-text">{{ task.progress }}%</span>
+            </span>
+            <button class="task-drill-btn" (click)="drillInto(task)" title="View sub-tasks">
+              →
+            </button>
+            <button
+              class="task-edit-btn"
+              (click)="openEditDialog(task); $event.stopPropagation()"
+              title="Edit task"
+            >
+              ✏️
+            </button>
+            <button
+              class="task-delete-btn"
+              (click)="confirmDelete(task); $event.stopPropagation()"
+              title="Delete task"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
+        <button class="add-task-btn" (click)="openAddChildDialog()">+ Add Task</button>
+      </div>
 
-        <div class="sidebar-section" *ngIf="filteredHallOfFame.length > 0">
-            <div class="sidebar-section-title">🏛️ Hall of Fame</div>
-            <div class="sidebar-item"
-                 *ngFor="let node of filteredHallOfFame"
-                 [class.active]="selectedRoadmap?.id === node.id"
-                 (click)="selectRoadmap(node)">
-                <span class="status-dot completed"></span>
-                <span class="item-title">{{ node.title }}</span>
-                <span class="item-progress" *ngIf="node.points">+{{ node.points }}pts</span>
-            </div>
+      <!-- ════════ CHECKLIST VIEW (Task → Sub-Tasks) ════════ -->
+      <div class="checklist-view" *ngIf="showChecklist">
+        <h3 class="section-level-heading">
+          <span class="section-level-tag slevel-5">Sub-Tasks</span>
+        </h3>
+        <div
+          class="checklist-item"
+          *ngFor="let subtask of getSortedChildren()"
+          [class.checklist-completed]="subtask.status === StatusEnum.COMPLETED"
+        >
+          <button
+            class="checklist-checkbox"
+            [class.checked]="subtask.status === StatusEnum.COMPLETED"
+            (click)="toggleTaskComplete(subtask)"
+          >
+            <span *ngIf="subtask.status === StatusEnum.COMPLETED">✓</span>
+          </button>
+          <div class="checklist-info">
+            <span class="checklist-title">
+              {{ subtask.title }}
+              <a class="checklist-link" *ngIf="subtask.url" [href]="subtask.url" target="_blank" (click)="$event.stopPropagation()" title="Open reference">🔗</a>
+            </span>
+            <span class="checklist-desc" *ngIf="subtask.description">{{
+              subtask.description
+            }}</span>
+          </div>
+          <div class="checklist-right">
+            <span class="checklist-effort" *ngIf="subtask.customField2"
+              >💪 {{ subtask.customField2 }}</span
+            >
+            <span class="checklist-due" *ngIf="subtask.dueDate"
+              >📅 {{ subtask.dueDate | date : 'shortDate' }}</span
+            >
+            <span class="checklist-points" *ngIf="subtask.status === StatusEnum.COMPLETED">
+              +{{ subtask.points }} pts
+            </span>
+            <button
+              class="checklist-edit-btn"
+              (click)="openEditDialog(subtask); $event.stopPropagation()"
+              title="Edit sub-task"
+            >
+              ✏️
+            </button>
+            <button
+              class="checklist-delete-btn"
+              (click)="confirmDelete(subtask); $event.stopPropagation()"
+              title="Delete sub-task"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
+        <button class="add-task-btn" (click)="openAddChildDialog()">+ Add Sub-Task</button>
+      </div>
 
-        <div class="sidebar-empty" *ngIf="allRoadmaps.length === 0">
-            <p>No roadmaps yet</p>
+      <!-- ════════ EMPTY CHILDREN STATE ════════ -->
+      <div
+        class="empty-children"
+        *ngIf="currentChildren.length === 0 && !isLoadingChildren && canAddChildren"
+      >
+        <div class="empty-children-icon">📂</div>
+        <p>No {{ getChildLevelName(currentViewNode.level) | lowercase }}s yet.</p>
+        <button class="btn-primary" (click)="openAddChildDialog()">
+          + Add First {{ getChildLevelName(currentViewNode.level) }}
+        </button>
+      </div>
+
+      <!-- Sub-Task detail (leaf node, no children) -->
+      <div class="leaf-detail" *ngIf="currentViewNode.level === LevelEnum.SUB_TASK">
+        <div class="leaf-card">
+          <p class="leaf-label">This is a sub-task — the smallest unit of work.</p>
+          <p class="leaf-hint">Use the status actions above to mark it as done and earn points!</p>
         </div>
-    </aside>
+      </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Welcome: no roadmaps -->
-        <div class="welcome-state" *ngIf="!currentViewNode && allRoadmaps.length === 0">
-            <div class="welcome-icon">🚀</div>
-            <h2>Begin Your Staircase</h2>
-            <p class="welcome-subtitle">Create your first roadmap to start turning visions into victories.</p>
-            <button class="btn-primary" (click)="openNewRoadmapDialog()">+ Create First Roadmap</button>
-        </div>
+      <div class="loading-state" *ngIf="isLoadingChildren">Loading...</div>
+    </div>
+  </main>
 
-        <!-- Welcome: has roadmaps but none selected -->
-        <div class="welcome-state" *ngIf="!currentViewNode && allRoadmaps.length > 0">
-            <div class="welcome-icon">👈</div>
-            <h2>Select a Roadmap</h2>
-            <p class="welcome-subtitle">Pick a roadmap from the sidebar to view its structure.</p>
-        </div>
+  <!-- Dialog -->
+  <app-node-dialog
+    *ngIf="isDialogOpen"
+    [level]="dialogLevel"
+    [parentId]="dialogParentId"
+    [editNode]="editNode"
+    (close)="closeDialog()"
+    (saved)="onNodeCreated()"
+  >
+  </app-node-dialog>
 
-        <!-- ════════ DETAIL VIEW ════════ -->
-        <div *ngIf="currentViewNode" class="detail-view">
+  <!-- Delete Confirmation Modal -->
+  <div class="delete-confirm-backdrop" *ngIf="isDeleteConfirmOpen" (click)="cancelDelete()">
+    <div class="delete-confirm-dialog glass-panel" (click)="$event.stopPropagation()">
+      <div class="delete-confirm-icon">⚠️</div>
+      <h3 class="delete-confirm-title">Delete {{ getLevelName(deleteTarget!.level) }}?</h3>
+      <p class="delete-confirm-desc">
+        Are you sure you want to delete
+        <strong>{{ deleteTarget!.title }}</strong
+        >? This action cannot be undone.
+      </p>
+      <div class="delete-confirm-actions">
+        <button class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn-danger" (click)="executeDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
 
-            <!-- ── Breadcrumb Navigation ── -->
-            <nav class="breadcrumb-nav" *ngIf="breadcrumb.length > 1">
-                <span class="breadcrumb-item"
-                      *ngFor="let crumb of breadcrumb; let i = index; let last = last"
-                      [class.current]="last"
-                      (click)="!last && navigateToBreadcrumb(i)">
-                    {{ crumb.title }}
-                    <span class="breadcrumb-sep" *ngIf="!last">›</span>
-                </span>
-            </nav>
-
-            <!-- ── Detail Header ── -->
-            <div class="detail-header">
-                <div class="detail-header-left">
-                    <button class="back-btn" *ngIf="breadcrumb.length > 1" (click)="goBack()" title="Go back">
-                        ←
-                    </button>
-                    <div class="detail-header-content">
-                        <div class="detail-badges">
-                            <span class="detail-level-badge" [ngClass]="'level-color-' + currentViewNode.level">
-                                {{ getLevelName(currentViewNode.level) }}
-                            </span>
-                            <span class="detail-status-chip" [ngClass]="'dstatus-' + currentViewNode.status">
-                                {{ getStatusLabel(currentViewNode.status) }}
-                            </span>
-                        </div>
-                        <h2 class="detail-title">{{ currentViewNode.title }}</h2>
-                        <p class="detail-description" *ngIf="currentViewNode.description">{{ currentViewNode.description }}</p>
-                        <div class="detail-meta">
-                            <span class="detail-meta-badge" *ngIf="currentViewNode.dueDate">
-                                📅 {{ currentViewNode.dueDate | date:'mediumDate' }}
-                            </span>
-                            <a class="detail-meta-badge link" *ngIf="currentViewNode.url"
-                               [href]="currentViewNode.url" target="_blank">
-                                🔗 Reference
-                            </a>
-                            <span class="detail-meta-badge" *ngIf="currentViewNode.customField1">
-                                {{ currentViewNode.customField1 }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-header-right">
-                    <span class="detail-points" *ngIf="currentViewNode.status === StatusEnum.COMPLETED">
-                        +{{ currentViewNode.points }} pts 🏆
-                    </span>
-                </div>
-            </div>
-
-            <!-- ── Progress Bar ── -->
-            <div class="detail-progress" *ngIf="currentViewNode.status !== StatusEnum.COMPLETED && currentChildren.length > 0">
-                <div class="progress-stats">
-                    <span>Progress</span>
-                    <span class="progress-percentage">{{ currentViewNode.progress }}%</span>
-                </div>
-                <div class="progress-bar-track">
-                    <div class="progress-bar-fill" [style.width.%]="currentViewNode.progress"></div>
-                </div>
-            </div>
-
-            <!-- ── Action Bar ── -->
-            <div class="detail-actions">
-                <button class="btn-action start-btn"
-                        *ngIf="currentViewNode.status === StatusEnum.PLANNING"
-                        (click)="startCurrentNode()">
-                    ▶ Start {{ getLevelName(currentViewNode.level) }}
-                </button>
-                <button class="btn-action complete-btn"
-                        *ngIf="currentViewNode.status === StatusEnum.PROGRESS"
-                        (click)="completeCurrentNode()">
-                    ✓ Complete {{ getLevelName(currentViewNode.level) }}
-                </button>
-                <button class="btn-secondary" *ngIf="canAddChildren"
-                        (click)="openAddChildDialog()">
-                    + Add {{ getChildLevelName(currentViewNode.level) }}
-                </button>
-            </div>
-
-            <!-- ════════ KANBAN VIEW (Roadmap → Projects, Project → Sub-Projects) ════════ -->
-            <div class="kanban-board" *ngIf="showKanban">
-                <!-- Planning Column -->
-                <div class="kanban-column">
-                    <div class="kanban-column-header">
-                        <span class="column-dot planning"></span>
-                        <h4>Planning</h4>
-                        <span class="column-count">{{ getChildrenByStatus(StatusEnum.PLANNING).length }}</span>
-                    </div>
-                    <div class="kanban-cards">
-                        <app-manifestation-node
-                            *ngFor="let child of getChildrenByStatus(StatusEnum.PLANNING)"
-                            [node]="child"
-                            (drillIn)="drillInto($event)"
-                            (updated)="onChildUpdated()">
-                        </app-manifestation-node>
-                        <button class="add-card-btn" (click)="openAddChildDialog()">
-                            + Add {{ getChildLevelName(currentViewNode.level) }}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- In Progress Column -->
-                <div class="kanban-column">
-                    <div class="kanban-column-header">
-                        <span class="column-dot progress"></span>
-                        <h4>In Progress</h4>
-                        <span class="column-count">{{ getChildrenByStatus(StatusEnum.PROGRESS).length + getChildrenByStatus(StatusEnum.HOLD).length }}</span>
-                    </div>
-                    <div class="kanban-cards">
-                        <app-manifestation-node
-                            *ngFor="let child of getChildrenByStatus(StatusEnum.PROGRESS)"
-                            [node]="child"
-                            [isActive]="true"
-                            (drillIn)="drillInto($event)"
-                            (updated)="onChildUpdated()">
-                        </app-manifestation-node>
-                        <app-manifestation-node
-                            *ngFor="let child of getChildrenByStatus(StatusEnum.HOLD)"
-                            [node]="child"
-                            (drillIn)="drillInto($event)"
-                            (updated)="onChildUpdated()">
-                        </app-manifestation-node>
-                    </div>
-                </div>
-
-                <!-- Completed Column -->
-                <div class="kanban-column">
-                    <div class="kanban-column-header">
-                        <span class="column-dot completed"></span>
-                        <h4>Completed</h4>
-                        <span class="column-count">{{ getChildrenByStatus(StatusEnum.COMPLETED).length }}</span>
-                    </div>
-                    <div class="kanban-cards">
-                        <app-manifestation-node
-                            *ngFor="let child of getChildrenByStatus(StatusEnum.COMPLETED)"
-                            [node]="child"
-                            [isCompleted]="true"
-                            (drillIn)="drillInto($event)"
-                            (updated)="onChildUpdated()">
-                        </app-manifestation-node>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ════════ TASK LIST VIEW (Sub-Project → Tasks) ════════ -->
-            <div class="task-list-view" *ngIf="showTaskList">
-                <div class="task-list-header">
-                    <span class="task-col-check"></span>
-                    <span class="task-col-title">Task</span>
-                    <span class="task-col-status">Status</span>
-                    <span class="task-col-priority">Priority</span>
-                    <span class="task-col-due">Due</span>
-                    <span class="task-col-progress">Progress</span>
-                    <span class="task-col-action"></span>
-                </div>
-                <div class="task-list-body">
-                    <div class="task-row"
-                         *ngFor="let task of getSortedChildren()"
-                         [class.task-completed]="task.status === StatusEnum.COMPLETED">
-                        <button class="task-checkbox"
-                                [class.checked]="task.status === StatusEnum.COMPLETED"
-                                (click)="toggleTaskComplete(task); $event.stopPropagation()">
-                            <span *ngIf="task.status === StatusEnum.COMPLETED">✓</span>
-                        </button>
-                        <span class="task-title" (click)="drillInto(task)">{{ task.title }}</span>
-                        <span class="task-status-chip"
-                              [ngClass]="'ts-' + task.status"
-                              (click)="cycleTaskStatus(task); $event.stopPropagation()"
-                              title="Click to change status">
-                            {{ getStatusLabel(task.status) }}
-                        </span>
-                        <span class="task-priority">{{ task.customField1 || '—' }}</span>
-                        <span class="task-due">{{ task.dueDate ? (task.dueDate | date:'shortDate') : '—' }}</span>
-                        <span class="task-progress-cell">
-                            <span class="task-progress-bar-track">
-                                <span class="task-progress-bar-fill" [style.width.%]="task.progress"></span>
-                            </span>
-                            <span class="task-progress-text">{{ task.progress }}%</span>
-                        </span>
-                        <button class="task-drill-btn" (click)="drillInto(task)" title="View sub-tasks">→</button>
-                    </div>
-                </div>
-                <button class="add-task-btn" (click)="openAddChildDialog()">
-                    + Add Task
-                </button>
-            </div>
-
-            <!-- ════════ CHECKLIST VIEW (Task → Sub-Tasks) ════════ -->
-            <div class="checklist-view" *ngIf="showChecklist">
-                <div class="checklist-item"
-                     *ngFor="let subtask of getSortedChildren()"
-                     [class.checklist-completed]="subtask.status === StatusEnum.COMPLETED">
-                    <button class="checklist-checkbox"
-                            [class.checked]="subtask.status === StatusEnum.COMPLETED"
-                            (click)="toggleTaskComplete(subtask)">
-                        <span *ngIf="subtask.status === StatusEnum.COMPLETED">✓</span>
-                    </button>
-                    <div class="checklist-info">
-                        <span class="checklist-title">{{ subtask.title }}</span>
-                        <span class="checklist-desc" *ngIf="subtask.description">{{ subtask.description }}</span>
-                    </div>
-                    <div class="checklist-right">
-                        <span class="checklist-due" *ngIf="subtask.dueDate">📅 {{ subtask.dueDate | date:'shortDate' }}</span>
-                        <span class="checklist-points" *ngIf="subtask.status === StatusEnum.COMPLETED">
-                            +{{ subtask.points }} pts
-                        </span>
-                    </div>
-                </div>
-                <button class="add-task-btn" (click)="openAddChildDialog()">
-                    + Add Sub-Task
-                </button>
-            </div>
-
-            <!-- ════════ EMPTY CHILDREN STATE ════════ -->
-            <div class="empty-children" *ngIf="currentChildren.length === 0 && !isLoadingChildren && canAddChildren">
-                <div class="empty-children-icon">📂</div>
-                <p>No {{ getChildLevelName(currentViewNode.level) | lowercase }}s yet.</p>
-                <button class="btn-primary" (click)="openAddChildDialog()">
-                    + Add First {{ getChildLevelName(currentViewNode.level) }}
-                </button>
-            </div>
-
-            <!-- Sub-Task detail (leaf node, no children) -->
-            <div class="leaf-detail" *ngIf="currentViewNode.level === LevelEnum.SUB_TASK">
-                <div class="leaf-card">
-                    <p class="leaf-label">This is a sub-task — the smallest unit of work.</p>
-                    <p class="leaf-hint">Use the status actions above to mark it as done and earn points!</p>
-                </div>
-            </div>
-
-            <div class="loading-state" *ngIf="isLoadingChildren">Loading...</div>
-        </div>
-    </main>
-
-    <!-- Dialog -->
-    <app-node-dialog *ngIf="isDialogOpen" [level]="dialogLevel" [parentId]="dialogParentId" (close)="closeDialog()"
-        (saved)="onNodeCreated()">
-    </app-node-dialog>
-
-    <!-- Mobile sidebar overlay -->
-    <div class="sidebar-overlay" *ngIf="isMobileSidebarOpen" (click)="isMobileSidebarOpen = false"></div>
+  <!-- Mobile sidebar overlay -->
+  <div
+    class="sidebar-overlay"
+    *ngIf="isMobileSidebarOpen"
+    (click)="isMobileSidebarOpen = false"
+  ></div>
 </div>

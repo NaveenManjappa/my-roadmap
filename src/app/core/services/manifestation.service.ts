@@ -111,4 +111,32 @@ export class ManifestationService {
             };
         });
     }
+
+    // Get all nodes for the current user (used for total points calculation)
+    getAllNodes(): Observable<ManifestationNode[]> {
+        return new Observable<ManifestationNode[]>(observer => {
+            let unsubscribe: () => void;
+            this.authService.user$.pipe(take(1)).subscribe(user => {
+                if (!user) {
+                    this.zone.run(() => observer.error(new Error('User not authenticated')));
+                    return;
+                }
+
+                const nodesRef = collection(this.firestore, this.collectionName);
+                const q = query(nodesRef, where('userId', '==', user.uid));
+
+                unsubscribe = onSnapshot(q,
+                    (snapshot) => {
+                        const nodes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManifestationNode));
+                        this.zone.run(() => observer.next(nodes));
+                    },
+                    (error) => this.zone.run(() => observer.error(error))
+                );
+            });
+
+            return () => {
+                if (unsubscribe) unsubscribe();
+            };
+        });
+    }
 }

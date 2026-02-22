@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, NgZone } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { ManifestationNode, LevelEnum, StatusEnum } from '../../shared/models/manifestation.model';
 import { ManifestationNodeComponent } from '../../components/manifestation-node/manifestation-node';
 import { NodeDialogComponent } from '../../components/node-dialog/node-dialog';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,12 +17,18 @@ import { NodeDialogComponent } from '../../components/node-dialog/node-dialog';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private manifestationService = inject(ManifestationService);
   private progressService = inject(ProgressService);
   private router = inject(Router);
   private zone = inject(NgZone);
+
+  // Subscription management to prevent stale listeners
+  private roadmapsSub?: Subscription;
+  private childrenSub?: Subscription;
+  private pointsSub?: Subscription;
+  private authSub?: Subscription;
 
   totalPoints = 0;
 
@@ -54,12 +61,18 @@ export class DashboardComponent implements OnInit {
   isDialogOpen = false;
   dialogLevel: LevelEnum = LevelEnum.ROADMAP;
   dialogParentId: string | null = null;
+  /** Node being edited (null = create mode) */
+  editNode: ManifestationNode | null = null;
+
+  // Delete confirmation state
+  isDeleteConfirmOpen = false;
+  deleteTarget: ManifestationNode | null = null;
 
   LevelEnum = LevelEnum;
   StatusEnum = StatusEnum;
 
   ngOnInit() {
-    this.authService.user$.subscribe(user => {
+    this.authSub = this.authService.user$.subscribe(user => {
       if (!user) {
         this.router.navigate(['/auth']);
       } else {
@@ -68,17 +81,25 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    this.authSub?.unsubscribe();
+    this.roadmapsSub?.unsubscribe();
+    this.childrenSub?.unsubscribe();
+    this.pointsSub?.unsubscribe();
+  }
+
   // ─── Sidebar / Roadmap Loading ───
 
   loadRoadmaps() {
-    this.manifestationService.getNodesByLevel(LevelEnum.ROADMAP).subscribe((nodes: ManifestationNode[]) => {
+    this.roadmapsSub?.unsubscribe();
+    this.roadmapsSub = this.manifestationService.getNodesByLevel(LevelEnum.ROADMAP).subscribe((nodes: ManifestationNode[]) => {
       this.zone.run(() => {
         this.allRoadmaps = nodes;
         this.blueprints = nodes.filter(n => n.status === StatusEnum.PLANNING);
         this.activeBuilds = nodes.filter(n => n.status === StatusEnum.PROGRESS || n.status === StatusEnum.HOLD);
         this.hallOfFame = nodes.filter(n => n.status === StatusEnum.COMPLETED);
         this.filterRoadmaps();
-        this.calculateTotalPoints(nodes);
+        this.loadTotalPoints();
 
         // Auto-select first active roadmap if nothing selected
         if (!this.selectedRoadmap && nodes.length > 0) {
@@ -118,6 +139,16 @@ export class DashboardComponent implements OnInit {
 
   calculateTotalPoints(nodes: ManifestationNode[]) {
     this.totalPoints = nodes.reduce((sum, node) => sum + (node.points || 0), 0);
+  }
+
+  /** Fetch all user nodes to sum up total reward points from every level */
+  loadTotalPoints() {
+    this.pointsSub?.unsubscribe();
+    this.pointsSub = this.manifestationService.getAllNodes().subscribe(allNodes => {
+      this.zone.run(() => {
+        this.calculateTotalPoints(allNodes);
+      });
+    });
   }
 
   // ─── Navigation: Select, Drill, Breadcrumb ───
@@ -161,7 +192,8 @@ export class DashboardComponent implements OnInit {
       return;
     }
     this.isLoadingChildren = true;
-    this.manifestationService.getChildren(this.currentViewNode.id).subscribe(children => {
+    this.childrenSub?.unsubscribe();
+    this.childrenSub = this.manifestationService.getChildren(this.currentViewNode.id).subscribe(children => {
       this.zone.run(() => {
         this.currentChildren = children;
         this.isLoadingChildren = false;
@@ -281,6 +313,7 @@ export class DashboardComponent implements OnInit {
   openNewRoadmapDialog() {
     this.dialogLevel = LevelEnum.ROADMAP;
     this.dialogParentId = null;
+    this.editNode = null;
     this.isDialogOpen = true;
   }
 
@@ -288,11 +321,73 @@ export class DashboardComponent implements OnInit {
     if (!this.currentViewNode?.id || this.currentViewNode.level >= LevelEnum.SUB_TASK) return;
     this.dialogLevel = (this.currentViewNode.level + 1) as LevelEnum;
     this.dialogParentId = this.currentViewNode.id;
+    this.editNode = null;
     this.isDialogOpen = true;
+  }
+
+  openEditDialog(node: ManifestationNode) {
+    this.editNode = node;
+    this.dialogLevel = node.level;
+    this.dialogParentId = node.parentId;
+    this.isDialogOpen = true;
+  }
+
+  editCurrentNode() {
+    if (this.currentViewNode) {
+      this.openEditDialog(this.currentViewNode);
+    }
+  }
+
+  // ─── Delete ───
+
+  confirmDelete(node: ManifestationNode) {
+    this.deleteTarget = node;
+    this.isDeleteConfirmOpen = true;
+  }
+
+  confirmDeleteCurrentNode() {
+    if (this.currentViewNode) {
+      this.confirmDelete(this.currentViewNode);
+    }
+  }
+
+  cancelDelete() {
+    this.isDeleteConfirmOpen = false;
+    this.deleteTarget = null;
+  }
+
+  async executeDelete() {
+    if (!this.deleteTarget?.id) return;
+    const deletedNode = this.deleteTarget;
+    this.isDeleteConfirmOpen = false;
+    this.deleteTarget = null;
+
+    try {
+      await this.manifestationService.deleteNode(deletedNode.id!);
+
+      // If deleting the current view node, navigate back
+      if (this.currentViewNode?.id === deletedNode.id) {
+        if (this.breadcrumb.length > 1) {
+          this.goBack();
+        } else {
+          // Deleted the root roadmap
+          this.currentViewNode = null;
+          this.selectedRoadmap = null;
+          this.breadcrumb = [];
+          this.currentChildren = [];
+        }
+      }
+
+      this.loadRoadmaps();
+      this.loadCurrentChildren();
+    } catch (err) {
+      console.error('Failed to delete node', err);
+    }
   }
 
   closeDialog() {
     this.isDialogOpen = false;
+    this.editNode = null;
   }
 
   onNodeCreated() {
@@ -350,6 +445,11 @@ export class DashboardComponent implements OnInit {
       case StatusEnum.COMPLETED: return 'completed';
       default: return '';
     }
+  }
+
+  /** Get a breadcrumb label showing the level type */
+  getBreadcrumbLabel(node: ManifestationNode): string {
+    return this.getLevelName(node.level) + ': ' + node.title;
   }
 
   /** Whether the current view shows children in kanban columns */
