@@ -1,0 +1,130 @@
+<div
+  class="trophy-backdrop"
+  (click)="onClose()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Trophy collection"
+>
+  <div class="trophy-panel" (click)="$event.stopPropagation()">
+    <div class="trophy-panel-header">
+      <div class="trophy-panel-title-row">
+        <h2 class="trophy-panel-title">🏆 Trophy Collection</h2>
+        <button class="trophy-close-btn" (click)="onClose()" aria-label="Close trophy panel">
+          &times;
+        </button>
+      </div>
+      <div class="trophy-summary">
+        <div class="trophy-summary-item">
+          <span class="trophy-summary-value">{{ totalPoints() | number }}</span>
+          <span class="trophy-summary-label">Total PP</span>
+        </div>
+        <div class="trophy-summary-item">
+          <span class="trophy-summary-value">{{ currentStreak() }}</span>
+          <span class="trophy-summary-label">Day Streak</span>
+        </div>
+        <div class="trophy-summary-item">
+          <span class="trophy-summary-value">{{ unlockedCount }}/{{ trophies().length }}</span>
+          <span class="trophy-summary-label">Trophies</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Trophies -->
+    <div class="trophy-category">
+      <h3 class="trophy-category-title">
+        <span class="category-icon" aria-hidden="true">⭐</span> Completion Trophies
+      </h3>
+      <div class="trophy-grid">
+        @for (trophy of completionTrophies; track trophy.id) {
+        <div
+          class="trophy-card"
+          [class.unlocked]="trophy.unlocked"
+          [class.locked]="!trophy.unlocked"
+        >
+          <span class="trophy-icon" [class.trophy-glow]="trophy.unlocked" aria-hidden="true">{{
+            trophy.icon
+          }}</span>
+          <span class="trophy-name">{{ trophy.name }}</span>
+          <span class="trophy-desc">{{ trophy.description }}</span>
+          @if (!trophy.unlocked) {
+          <div class="trophy-progress">
+            <div class="trophy-progress-bar">
+              <div class="trophy-progress-fill" [style.width.%]="progressPercent(trophy)"></div>
+            </div>
+            <span class="trophy-progress-text">{{ trophy.current }}/{{ trophy.target }}</span>
+          </div>
+          } @else {
+          <span class="trophy-unlocked-badge">✓ Unlocked</span>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Points Milestones -->
+    <div class="trophy-category">
+      <h3 class="trophy-category-title">
+        <span class="category-icon" aria-hidden="true">💎</span> Points Milestones
+      </h3>
+      <div class="trophy-grid">
+        @for (trophy of pointsTrophies; track trophy.id) {
+        <div
+          class="trophy-card"
+          [class.unlocked]="trophy.unlocked"
+          [class.locked]="!trophy.unlocked"
+        >
+          <span class="trophy-icon" [class.trophy-glow]="trophy.unlocked" aria-hidden="true">{{
+            trophy.icon
+          }}</span>
+          <span class="trophy-name">{{ trophy.name }}</span>
+          <span class="trophy-desc">{{ trophy.description }}</span>
+          @if (!trophy.unlocked) {
+          <div class="trophy-progress">
+            <div class="trophy-progress-bar">
+              <div class="trophy-progress-fill" [style.width.%]="progressPercent(trophy)"></div>
+            </div>
+            <span class="trophy-progress-text"
+              >{{ trophy.current | number }}/{{ trophy.target | number }}</span
+            >
+          </div>
+          } @else {
+          <span class="trophy-unlocked-badge">✓ Unlocked</span>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Streak Trophies -->
+    <div class="trophy-category">
+      <h3 class="trophy-category-title">
+        <span class="category-icon" aria-hidden="true">🔥</span> Streak Trophies
+      </h3>
+      <div class="trophy-grid">
+        @for (trophy of streakTrophies; track trophy.id) {
+        <div
+          class="trophy-card"
+          [class.unlocked]="trophy.unlocked"
+          [class.locked]="!trophy.unlocked"
+        >
+          <span class="trophy-icon" [class.trophy-glow]="trophy.unlocked" aria-hidden="true">{{
+            trophy.icon
+          }}</span>
+          <span class="trophy-name">{{ trophy.name }}</span>
+          <span class="trophy-desc">{{ trophy.description }}</span>
+          @if (!trophy.unlocked) {
+          <div class="trophy-progress">
+            <div class="trophy-progress-bar">
+              <div class="trophy-progress-fill" [style.width.%]="progressPercent(trophy)"></div>
+            </div>
+            <span class="trophy-progress-text">{{ trophy.current }}/{{ trophy.target }}</span>
+          </div>
+          } @else {
+          <span class="trophy-unlocked-badge">✓ Unlocked</span>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

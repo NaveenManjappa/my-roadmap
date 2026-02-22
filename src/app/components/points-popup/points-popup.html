@@ -1,0 +1,56 @@
+<div
+  class="popup-backdrop"
+  (click)="onDismiss()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Points earned"
+>
+  <div class="popup-card" (click)="$event.stopPropagation()">
+    <div class="popup-header">
+      <span class="popup-icon animate-trophy-pop" aria-hidden="true">🎉</span>
+      <h3 class="popup-title">{{ levelName() }} Completed!</h3>
+    </div>
+
+    <div class="popup-points-breakdown">
+      <div class="breakdown-row">
+        <span class="breakdown-label">Base Points</span>
+        <span class="breakdown-value">+{{ base() }} PP</span>
+      </div>
+      @if (deadlineBoost() > 0) {
+      <div class="breakdown-row boost">
+        <span class="breakdown-label">🕐 Early Finish Boost</span>
+        <span class="breakdown-value">+{{ deadlineBoost() }} PP</span>
+      </div>
+      } @if (streakBonus() > 0) {
+      <div class="breakdown-row streak">
+        <span class="breakdown-label">🔥 Streak Bonus ({{ streakCount() }}-day streak)</span>
+        <span class="breakdown-value">+{{ streakBonus() }} PP</span>
+      </div>
+      }
+      <div class="breakdown-divider"></div>
+      <div class="breakdown-row total">
+        <span class="breakdown-label">Total Earned</span>
+        <span class="breakdown-value">+{{ total() }} PP</span>
+      </div>
+    </div>
+
+    @if (newTrophies().length > 0) {
+    <div class="popup-trophies">
+      <h4 class="trophy-unlock-title">🏆 Trophy Unlocked!</h4>
+      @for (trophy of newTrophies(); track trophy.id) {
+      <div class="trophy-unlock-card">
+        <span class="trophy-unlock-icon animate-trophy-pop" aria-hidden="true">{{
+          trophy.icon
+        }}</span>
+        <div class="trophy-unlock-info">
+          <span class="trophy-unlock-name">{{ trophy.name }}</span>
+          <span class="trophy-unlock-desc">{{ trophy.description }}</span>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <button class="btn-primary popup-dismiss-btn" (click)="onDismiss()">Awesome!</button>
+  </div>
+</div>

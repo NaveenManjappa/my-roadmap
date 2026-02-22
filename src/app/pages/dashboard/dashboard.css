@@ -137,6 +137,14 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.points-badge:hover {
+  background: var(--bg-surface-hover);
 }
 
 .points-label {
@@ -151,6 +159,52 @@
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+/* ── Streak Badge ── */
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  background: rgba(239, 68, 68, 0.12);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.streak-badge:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.streak-icon {
+  font-size: 1rem;
+}
+
+.streak-count {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-red);
+}
+
+/* ── Trophy Button ── */
+.trophy-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius-full);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.trophy-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--trophy-gold);
+  box-shadow: var(--shadow-glow-gold);
 }
 
 /* ── Theme Toggle ── */
@@ -453,6 +507,9 @@
 }
 .stat-points .stat-number {
   color: var(--trophy-gold);
+}
+.stat-points {
+  cursor: pointer;
 }
 
 /* ── Widget Cards ── */

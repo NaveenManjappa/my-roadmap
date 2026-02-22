@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { LevelEnum } from '../../shared/models/manifestation.model';
+import { POINTS_TABLE } from '../../shared/models/gamification.model';
 
 @Injectable({
     providedIn: 'root'
@@ -8,14 +9,14 @@ export class ProgressService {
 
     constructor() { }
 
-    // Calculate points based on the level of the node
+    // Calculate points based on the level of the node (updated PP values)
     getPointsForLevel(level: LevelEnum): number {
         switch (level) {
-            case LevelEnum.SUB_TASK: return 5;
-            case LevelEnum.TASK: return 20;
-            case LevelEnum.SUB_PROJECT: return 50;
-            case LevelEnum.PROJECT: return 100;
-            case LevelEnum.ROADMAP: return 500;
+            case LevelEnum.SUB_TASK: return POINTS_TABLE.SUB_TASK;
+            case LevelEnum.TASK: return POINTS_TABLE.TASK;
+            case LevelEnum.SUB_PROJECT: return POINTS_TABLE.SUB_PROJECT;
+            case LevelEnum.PROJECT: return POINTS_TABLE.PROJECT;
+            case LevelEnum.ROADMAP: return 0; // Roadmaps don't earn points directly
             default: return 0;
         }
     }

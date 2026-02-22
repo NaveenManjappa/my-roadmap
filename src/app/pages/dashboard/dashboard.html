@@ -10,10 +10,36 @@
     </div>
 
     <div class="header-actions">
-      <div class="points-badge">
-        <span class="points-label">Total Points</span>
-        <span class="points-value">{{ totalPoints }} pts</span>
+      <div
+        class="points-badge"
+        (click)="openTrophyPanel()"
+        role="button"
+        tabindex="0"
+        aria-label="View trophies and points"
+      >
+        <span class="points-label">Progress Points</span>
+        <span class="points-value">{{ gamificationService.totalPoints() | number }} PP</span>
       </div>
+      @if (gamificationService.currentStreak() > 0) {
+      <div
+        class="streak-badge"
+        (click)="openTrophyPanel()"
+        role="button"
+        tabindex="0"
+        aria-label="View streak details"
+      >
+        <span class="streak-icon" aria-hidden="true">🔥</span>
+        <span class="streak-count">{{ gamificationService.currentStreak() }}</span>
+      </div>
+      }
+      <button
+        class="trophy-btn"
+        (click)="openTrophyPanel()"
+        title="View Trophies"
+        aria-label="View trophies"
+      >
+        🏆
+      </button>
       <!-- Theme Toggle -->
       <button
         class="theme-toggle-btn"
@@ -197,11 +223,11 @@
             ></div>
           </div>
         </div>
-        <div class="stat-card stat-points">
+        <div class="stat-card stat-points" (click)="openTrophyPanel()" role="button" tabindex="0">
           <div class="stat-icon">🏆</div>
           <div class="stat-info">
-            <span class="stat-number">{{ totalPoints }}</span>
-            <span class="stat-label">Total Points</span>
+            <span class="stat-number">{{ gamificationService.totalPoints() | number }}</span>
+            <span class="stat-label">Progress Points</span>
           </div>
         </div>
 
@@ -938,5 +964,29 @@
   <!-- Mobile sidebar overlay -->
   @if (isMobileSidebarOpen) {
   <div class="sidebar-overlay" (click)="isMobileSidebarOpen = false" aria-hidden="true"></div>
+  }
+
+  <!-- ═══════ POINTS POPUP ═══════ -->
+  @if (showPointsPopup && latestEarning) {
+  <app-points-popup
+    [base]="latestEarning.base"
+    [deadlineBoost]="latestEarning.deadlineBoost"
+    [streakBonus]="latestEarning.streakBonus"
+    [total]="latestEarning.total"
+    [levelName]="latestEarning.levelName"
+    [newTrophies]="latestEarning.newTrophies"
+    [streakCount]="gamificationService.currentStreak()"
+    (dismiss)="dismissPointsPopup()"
+  />
+  }
+
+  <!-- ═══════ TROPHY GRID ═══════ -->
+  @if (showTrophyPanel) {
+  <app-trophy-grid
+    [trophies]="gamificationService.trophies()"
+    [totalPoints]="gamificationService.totalPoints()"
+    [currentStreak]="gamificationService.currentStreak()"
+    (close)="closeTrophyPanel()"
+  />
   }
 </div>

@@ -4,11 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ManifestationService } from '../../core/services/manifestation.service';
 import { ProgressService } from '../../core/services/progress.service';
+import { GamificationService, PointsEarning } from '../../core/services/gamification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { Router } from '@angular/router';
 import { ManifestationNode, LevelEnum, StatusEnum } from '../../shared/models/manifestation.model';
+import { TrophyDefinition } from '../../shared/models/gamification.model';
 import { ManifestationNodeComponent } from '../../components/manifestation-node/manifestation-node';
 import { NodeDialogComponent } from '../../components/node-dialog/node-dialog';
+import { PointsPopupComponent } from '../../components/points-popup/points-popup';
+import { TrophyGridComponent } from '../../components/trophy-grid/trophy-grid';
 import { Subscription } from 'rxjs';
 
 export type ViewMode = 'board' | 'list';
@@ -16,7 +20,7 @@ export type SearchFilter = 'all' | 'planning' | 'progress' | 'completed' | 'hold
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule, ManifestationNodeComponent, NodeDialogComponent],
+  imports: [CommonModule, FormsModule, ManifestationNodeComponent, NodeDialogComponent, PointsPopupComponent, TrophyGridComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -24,6 +28,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private manifestationService = inject(ManifestationService);
   private progressService = inject(ProgressService);
+  protected gamificationService = inject(GamificationService);
   protected themeService = inject(ThemeService);
   private router = inject(Router);
   private zone = inject(NgZone);
@@ -34,7 +39,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private pointsSub?: Subscription;
   private authSub?: Subscription;
 
-  totalPoints = 0;
+  // Points popup state
+  showPointsPopup = false;
+  latestEarning: PointsEarning | null = null;
+
+  // Trophy panel state
+  showTrophyPanel = false;
 
   // All roadmaps (for sidebar)
   allRoadmaps: ManifestationNode[] = [];
@@ -118,6 +128,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.router.navigate(['/auth']);
       } else {
         this.loadRoadmaps();
+        this.gamificationService.loadProfile();
       }
     });
   }
@@ -175,17 +186,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  calculateTotalPoints(nodes: ManifestationNode[]) {
-    this.totalPoints = nodes.reduce((sum, node) => sum + (node.points || 0), 0);
-  }
-
-  /** Fetch all user nodes to sum up total reward points from every level */
+  /** Fetch all user nodes (kept for allNodes usage, points are from gamification service) */
   loadTotalPoints() {
     this.pointsSub?.unsubscribe();
     this.pointsSub = this.manifestationService.getAllNodes().subscribe(allNodes => {
       this.zone.run(() => {
         this.allNodes = allNodes;
-        this.calculateTotalPoints(allNodes);
       });
     });
   }
@@ -293,6 +299,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.currentViewNode.status = StatusEnum.COMPLETED;
     this.currentViewNode.progress = 100;
     this.currentViewNode.points = pts;
+
+    // Award gamification points
+    const earning = await this.gamificationService.awardCompletion(
+      this.currentViewNode.level,
+      this.currentViewNode.dueDate ?? undefined
+    );
+    this.showEarningPopup(earning);
+
     this.loadRoadmaps();
   }
 
@@ -301,6 +315,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async toggleTaskComplete(node: ManifestationNode) {
     if (!node.id) return;
     if (node.status === StatusEnum.COMPLETED) {
+      // Un-completing: reverse gamification points
+      const pts = node.points || 0;
       await this.manifestationService.updateNode(node.id, {
         status: StatusEnum.PROGRESS,
         progress: 0,
@@ -309,6 +325,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       node.status = StatusEnum.PROGRESS;
       node.progress = 0;
       node.points = 0;
+      await this.gamificationService.reverseCompletion(node.level, pts);
     } else {
       const pts = this.progressService.getPointsForLevel(node.level);
       await this.manifestationService.updateNode(node.id, {
@@ -319,6 +336,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       node.status = StatusEnum.COMPLETED;
       node.progress = 100;
       node.points = pts;
+
+      // Award gamification points
+      const earning = await this.gamificationService.awardCompletion(
+        node.level,
+        node.dueDate ?? undefined
+      );
+      this.showEarningPopup(earning);
     }
     this.recalculateCurrentNodeProgress();
     this.loadRoadmaps();
@@ -329,6 +353,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const order = [StatusEnum.PLANNING, StatusEnum.PROGRESS, StatusEnum.HOLD, StatusEnum.COMPLETED];
     const currentIndex = order.indexOf(node.status);
     const nextStatus = order[(currentIndex + 1) % order.length];
+    const wasCompleted = node.status === StatusEnum.COMPLETED;
 
     const updates: Partial<ManifestationNode> = { status: nextStatus };
     if (nextStatus === StatusEnum.COMPLETED) {
@@ -336,14 +361,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
       updates.progress = 100;
       node.points = updates.points;
       node.progress = 100;
-    } else if (node.status === StatusEnum.COMPLETED) {
+    } else if (wasCompleted) {
       updates.progress = 0;
       updates.points = 0;
+      const oldPts = node.points || 0;
       node.progress = 0;
       node.points = 0;
+      // Reverse gamification
+      await this.gamificationService.reverseCompletion(node.level, oldPts);
     }
     await this.manifestationService.updateNode(node.id, updates);
     node.status = nextStatus;
+
+    // Award gamification if cycling into completed
+    if (nextStatus === StatusEnum.COMPLETED) {
+      const earning = await this.gamificationService.awardCompletion(
+        node.level,
+        node.dueDate ?? undefined
+      );
+      this.showEarningPopup(earning);
+    }
+
     this.recalculateCurrentNodeProgress();
     this.loadRoadmaps();
   }
@@ -586,5 +624,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return 'conic-gradient(var(--bg-surface-elevated) 0% 100%)';
     }
     return `conic-gradient(${segments.join(', ')})`;
+  }
+
+  // ─── Points Popup & Trophy Panel ───
+
+  showEarningPopup(earning: PointsEarning): void {
+    if (earning.total > 0) {
+      this.latestEarning = earning;
+      this.showPointsPopup = true;
+    }
+  }
+
+  dismissPointsPopup(): void {
+    this.showPointsPopup = false;
+    this.latestEarning = null;
+  }
+
+  openTrophyPanel(): void {
+    this.showTrophyPanel = true;
+  }
+
+  closeTrophyPanel(): void {
+    this.showTrophyPanel = false;
   }
 }

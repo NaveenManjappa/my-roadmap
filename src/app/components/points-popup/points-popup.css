@@ -1,0 +1,144 @@
+/* ─── Points Popup ─── */
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.popup-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-align: center;
+}
+
+.popup-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.popup-icon {
+  font-size: 3rem;
+}
+
+.popup-title {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ─── Breakdown ─── */
+.popup-points-breakdown {
+  background: var(--bg-surface-elevated);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  text-align: left;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.breakdown-label {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-value {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.breakdown-row.boost .breakdown-value {
+  color: var(--status-planning);
+}
+
+.breakdown-row.streak .breakdown-value {
+  color: var(--color-red);
+}
+
+.breakdown-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--spacing-sm) 0;
+}
+
+.breakdown-row.total .breakdown-label {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.breakdown-row.total .breakdown-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--trophy-gold);
+}
+
+/* ─── Trophy Unlock Section ─── */
+.popup-trophies {
+  margin-bottom: var(--spacing-lg);
+}
+
+.trophy-unlock-title {
+  font-size: 0.95rem;
+  color: var(--trophy-gold);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.trophy-unlock-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--bg-surface-elevated);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--trophy-gold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.trophy-unlock-icon {
+  font-size: 2rem;
+}
+
+.trophy-unlock-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.trophy-unlock-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.trophy-unlock-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Dismiss Button ─── */
+.popup-dismiss-btn {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: 1rem;
+}
