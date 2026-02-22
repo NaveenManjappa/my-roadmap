@@ -270,7 +270,11 @@
             role="button"
             tabindex="0"
           >
-            <span class="status-dot" [class]="getStatusDotClass(roadmap.status)" aria-hidden="true"></span>
+            <span
+              class="status-dot"
+              [class]="getStatusDotClass(roadmap.status)"
+              aria-hidden="true"
+            ></span>
             <span class="overview-roadmap-title">{{ roadmap.title }}</span>
             <span class="overview-roadmap-status" [class]="'ors-' + roadmap.status">{{
               getStatusLabel(roadmap.status)

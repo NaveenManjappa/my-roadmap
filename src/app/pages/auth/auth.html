@@ -8,14 +8,14 @@
     <div class="auth-body">
       <button class="btn-primary google-btn" (click)="loginWithGoogle()" [disabled]="isLoading">
         @if (!isLoading) {
-          <span>Sign in with Google</span>
+        <span>Sign in with Google</span>
         } @else {
-          <span>Signing in...</span>
+        <span>Signing in...</span>
         }
       </button>
 
       @if (errorMsg) {
-        <p class="error-msg" role="alert">{{ errorMsg }}</p>
+      <p class="error-msg" role="alert">{{ errorMsg }}</p>
       }
     </div>
   </div>
