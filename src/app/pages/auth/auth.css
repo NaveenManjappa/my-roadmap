@@ -26,7 +26,7 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at center, rgba(94, 106, 210, 0.1), transparent 50%);
+    background: radial-gradient(circle at center, rgba(0, 123, 255, 0.08), transparent 50%);
     pointer-events: none;
     z-index: -1;
 }
@@ -37,9 +37,10 @@
 
 .auth-header h1 {
     font-size: 2.5rem;
-    background: linear-gradient(135deg, var(--text-primary), var(--accent-secondary));
+    background: var(--gradient-accent);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: var(--spacing-xs);
 }
 
@@ -65,8 +66,7 @@
 }
 
 .error-msg {
-    color: var(--level-1);
-    /* Red/Pink error */
+    color: var(--status-hold);
     font-size: 0.9rem;
     margin-top: var(--spacing-sm);
 }

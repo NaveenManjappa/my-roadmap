@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ManifestationNode, LevelEnum, StatusEnum } from '../../shared/models/manifestation.model';
@@ -7,10 +7,10 @@ import { ProgressService } from '../../core/services/progress.service';
 
 @Component({
   selector: 'app-node-dialog',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './node-dialog.html',
-  styleUrls: ['./node-dialog.css']
+  styleUrls: ['./node-dialog.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NodeDialogComponent implements OnInit {
   @Input() level!: LevelEnum;

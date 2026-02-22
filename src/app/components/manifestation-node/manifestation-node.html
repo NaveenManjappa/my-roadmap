@@ -1,20 +1,23 @@
 <div
   class="node-card"
   (click)="onCardClick()"
-  [ngClass]="[
-    getLevelClass(),
-    node.status === StatusEnum.COMPLETED ? 'completed-node' : '',
-    isActive ? 'active-node' : ''
-  ]"
+  [class]="getLevelClass()"
+  [class.completed-node]="node.status === StatusEnum.COMPLETED"
+  [class.active-node]="isActive"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="node.title + ' - ' + getStatusLabel(node.status)"
 >
   <!-- Top row: level + status badges -->
   <div class="card-top">
     <span class="level-badge">{{ getLevelName(node.level) }}</span>
     <span
       class="status-chip"
-      [ngClass]="'status-' + node.status"
+      [class]="'status-' + node.status"
       (click)="cycleStatus(); $event.stopPropagation()"
       title="Click to change status"
+      role="button"
+      tabindex="0"
     >
       {{ getStatusLabel(node.status) }}
     </span>
@@ -23,35 +26,59 @@
   <!-- Card body: clickable to drill in -->
   <div class="card-body">
     <h4 class="title">{{ node.title }}</h4>
-    <p class="card-description" *ngIf="node.description">{{ node.description }}</p>
+    @if (node.description) {
+    <p class="card-description">{{ node.description }}</p>
+    }
   </div>
 
   <!-- Edit button -->
-  <button class="edit-btn" (click)="onEditClick($event)" title="Edit">✏️</button>
+  <button class="edit-btn" (click)="onEditClick($event)" title="Edit" aria-label="Edit node">
+    ✏️
+  </button>
   <!-- Delete button -->
-  <button class="delete-btn" (click)="onDeleteClick($event)" title="Delete">🗑️</button>
+  <button
+    class="delete-btn"
+    (click)="onDeleteClick($event)"
+    title="Delete"
+    aria-label="Delete node"
+  >
+    🗑️
+  </button>
 
   <!-- Card footer: meta + stats -->
   <div class="card-footer">
     <div class="card-meta">
-      <span class="meta-item" *ngIf="node.dueDate">📅 {{ node.dueDate | date : 'shortDate' }}</span>
-      <span class="meta-item priority" *ngIf="node.customField1">{{ node.customField1 }}</span>
-      <span class="meta-item effort" *ngIf="node.customField2">💪 {{ node.customField2 }}</span>
-      <a class="meta-item link" *ngIf="node.url" [href]="node.url" target="_blank" (click)="$event.stopPropagation()" title="Open reference">🔗</a>
+      @if (node.dueDate) {
+      <span class="meta-item">📅 {{ node.dueDate | date : 'shortDate' }}</span>
+      } @if (node.customField1) {
+      <span class="meta-item priority">{{ node.customField1 }}</span>
+      } @if (node.customField2) {
+      <span class="meta-item effort">💪 {{ node.customField2 }}</span>
+      } @if (node.url) {
+      <a
+        class="meta-item link"
+        [href]="node.url"
+        target="_blank"
+        (click)="$event.stopPropagation()"
+        title="Open reference"
+        >🔗</a
+      >
+      }
     </div>
     <div class="card-stats">
-      <span class="progress-text" *ngIf="node.status !== StatusEnum.COMPLETED"
-        >{{ node.progress }}%</span
-      >
-      <span class="points-earned" *ngIf="node.status === StatusEnum.COMPLETED"
-        >+{{ node.points }} pts</span
-      >
+      @if (node.status !== StatusEnum.COMPLETED) {
+      <span class="progress-text">{{ node.progress }}%</span>
+      } @else {
+      <span class="points-earned">+{{ node.points }} pts</span>
+      }
       <span class="drill-arrow">→</span>
     </div>
   </div>
 
-  <!-- Thin progress bar at bottom edge -->
-  <div class="progress-bar-container" *ngIf="node.status !== StatusEnum.COMPLETED">
+  <!-- Gradient progress bar at bottom edge -->
+  @if (node.status !== StatusEnum.COMPLETED) {
+  <div class="progress-bar-container">
     <div class="progress-bar" [style.width.%]="node.progress"></div>
   </div>
+  }
 </div>

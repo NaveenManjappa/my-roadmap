@@ -1,18 +1,21 @@
-import { Component, inject, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, NgZone, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ManifestationService } from '../../core/services/manifestation.service';
 import { ProgressService } from '../../core/services/progress.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { Router } from '@angular/router';
 import { ManifestationNode, LevelEnum, StatusEnum } from '../../shared/models/manifestation.model';
 import { ManifestationNodeComponent } from '../../components/manifestation-node/manifestation-node';
 import { NodeDialogComponent } from '../../components/node-dialog/node-dialog';
 import { Subscription } from 'rxjs';
 
+export type ViewMode = 'board' | 'list';
+export type SearchFilter = 'all' | 'planning' | 'progress' | 'completed' | 'hold';
+
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [CommonModule, FormsModule, ManifestationNodeComponent, NodeDialogComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
@@ -21,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private manifestationService = inject(ManifestationService);
   private progressService = inject(ProgressService);
+  protected themeService = inject(ThemeService);
   private router = inject(Router);
   private zone = inject(NgZone);
 
@@ -34,15 +38,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // All roadmaps (for sidebar)
   allRoadmaps: ManifestationNode[] = [];
+  allNodes: ManifestationNode[] = [];
   blueprints: ManifestationNode[] = [];
   activeBuilds: ManifestationNode[] = [];
   hallOfFame: ManifestationNode[] = [];
+  onHoldRoadmaps: ManifestationNode[] = [];
 
   // Filtered lists for search
   filteredBlueprints: ManifestationNode[] = [];
   filteredActiveBuilds: ManifestationNode[] = [];
   filteredHallOfFame: ManifestationNode[] = [];
+  filteredOnHold: ManifestationNode[] = [];
   searchQuery = '';
+
+  // Global search with filters
+  globalSearchQuery = '';
+  searchFilter: SearchFilter = 'all';
+
+  // View mode
+  viewMode: ViewMode = 'list';
+
+  // Overview dashboard
+  showOverview = true;
 
   // Selected roadmap (highlighted in sidebar)
   selectedRoadmap: ManifestationNode | null = null;
@@ -71,6 +88,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   LevelEnum = LevelEnum;
   StatusEnum = StatusEnum;
 
+  // Overview computed stats
+  get overviewStats() {
+    const total = this.allRoadmaps.length;
+    const planning = this.blueprints.length;
+    const active = this.activeBuilds.filter(n => n.status === StatusEnum.PROGRESS).length;
+    const completed = this.hallOfFame.length;
+    const hold = this.onHoldRoadmaps.length;
+    const avgProgress = total > 0
+      ? Math.round(this.allRoadmaps.reduce((sum, n) => sum + (n.progress || 0), 0) / total)
+      : 0;
+    return { total, planning, active, completed, hold, avgProgress };
+  }
+
+  get pieChartSegments() {
+    const s = this.overviewStats;
+    const total = s.total || 1;
+    return {
+      planning: (s.planning / total) * 100,
+      active: (s.active / total) * 100,
+      completed: (s.completed / total) * 100,
+      hold: (s.hold / total) * 100
+    };
+  }
+
   ngOnInit() {
     this.authSub = this.authService.user$.subscribe(user => {
       if (!user) {
@@ -96,16 +137,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.zone.run(() => {
         this.allRoadmaps = nodes;
         this.blueprints = nodes.filter(n => n.status === StatusEnum.PLANNING);
-        this.activeBuilds = nodes.filter(n => n.status === StatusEnum.PROGRESS || n.status === StatusEnum.HOLD);
+        this.activeBuilds = nodes.filter(n => n.status === StatusEnum.PROGRESS);
+        this.onHoldRoadmaps = nodes.filter(n => n.status === StatusEnum.HOLD);
         this.hallOfFame = nodes.filter(n => n.status === StatusEnum.COMPLETED);
         this.filterRoadmaps();
         this.loadTotalPoints();
-
-        // Auto-select first active roadmap if nothing selected
-        if (!this.selectedRoadmap && nodes.length > 0) {
-          const autoSelect = this.activeBuilds[0] || this.blueprints[0] || nodes[0];
-          this.selectRoadmap(autoSelect);
-        }
 
         // Refresh current breadcrumb root if it was updated
         if (this.selectedRoadmap) {
@@ -130,10 +166,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.filteredBlueprints = this.blueprints;
       this.filteredActiveBuilds = this.activeBuilds;
       this.filteredHallOfFame = this.hallOfFame;
+      this.filteredOnHold = this.onHoldRoadmaps;
     } else {
       this.filteredBlueprints = this.blueprints.filter(n => n.title.toLowerCase().includes(q));
       this.filteredActiveBuilds = this.activeBuilds.filter(n => n.title.toLowerCase().includes(q));
       this.filteredHallOfFame = this.hallOfFame.filter(n => n.title.toLowerCase().includes(q));
+      this.filteredOnHold = this.onHoldRoadmaps.filter(n => n.title.toLowerCase().includes(q));
     }
   }
 
@@ -146,6 +184,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.pointsSub?.unsubscribe();
     this.pointsSub = this.manifestationService.getAllNodes().subscribe(allNodes => {
       this.zone.run(() => {
+        this.allNodes = allNodes;
         this.calculateTotalPoints(allNodes);
       });
     });
@@ -154,6 +193,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── Navigation: Select, Drill, Breadcrumb ───
 
   selectRoadmap(node: ManifestationNode) {
+    this.showOverview = false;
     this.selectedRoadmap = node;
     this.breadcrumb = [node];
     this.currentViewNode = node;
@@ -470,5 +510,81 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /** Whether children can be added at this level */
   get canAddChildren(): boolean {
     return !!this.currentViewNode && this.currentViewNode.level < LevelEnum.SUB_TASK;
+  }
+
+  // ─── View Mode ───
+  setViewMode(mode: ViewMode) {
+    this.viewMode = mode;
+  }
+
+  toggleOverview() {
+    this.showOverview = !this.showOverview;
+  }
+
+  // ─── Global Search & Filter ───
+  get globalFilteredChildren(): ManifestationNode[] {
+    let items = this.currentChildren;
+    const q = this.globalSearchQuery.toLowerCase().trim();
+    if (q) {
+      items = items.filter(n =>
+        n.title.toLowerCase().includes(q) ||
+        (n.description && n.description.toLowerCase().includes(q)) ||
+        (n.customField1 && n.customField1.toLowerCase().includes(q))
+      );
+    }
+    if (this.searchFilter !== 'all') {
+      items = items.filter(n => n.status === this.searchFilter);
+    }
+    return items;
+  }
+
+  setSearchFilter(filter: SearchFilter) {
+    this.searchFilter = filter;
+  }
+
+  clearGlobalSearch() {
+    this.globalSearchQuery = '';
+    this.searchFilter = 'all';
+  }
+
+  // ─── Filtered Kanban helpers ───
+  getFilteredChildrenByStatus(status: StatusEnum): ManifestationNode[] {
+    return this.globalFilteredChildren.filter(c => c.status === status);
+  }
+
+  getFilteredSortedChildren(): ManifestationNode[] {
+    return [...this.globalFilteredChildren].sort((a, b) => {
+      if (a.status === StatusEnum.COMPLETED && b.status !== StatusEnum.COMPLETED) return 1;
+      if (a.status !== StatusEnum.COMPLETED && b.status === StatusEnum.COMPLETED) return -1;
+      return 0;
+    });
+  }
+
+  /** CSS conic-gradient string for the pie chart */
+  get pieChartGradient(): string {
+    const s = this.pieChartSegments;
+    let offset = 0;
+    const segments: string[] = [];
+
+    if (s.completed > 0) {
+      segments.push(`var(--status-completed) ${offset}% ${offset + s.completed}%`);
+      offset += s.completed;
+    }
+    if (s.active > 0) {
+      segments.push(`var(--status-progress) ${offset}% ${offset + s.active}%`);
+      offset += s.active;
+    }
+    if (s.planning > 0) {
+      segments.push(`var(--status-planning) ${offset}% ${offset + s.planning}%`);
+      offset += s.planning;
+    }
+    if (s.hold > 0) {
+      segments.push(`var(--status-hold) ${offset}% ${offset + s.hold}%`);
+      offset += s.hold;
+    }
+    if (segments.length === 0) {
+      return 'conic-gradient(var(--bg-surface-elevated) 0% 100%)';
+    }
+    return `conic-gradient(${segments.join(', ')})`;
   }
 }

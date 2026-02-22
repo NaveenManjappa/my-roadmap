@@ -4,8 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 17, 21, 0.85);
-    /* Dark bg-core */
+    background: var(--bg-overlay);
     backdrop-filter: blur(4px);
     z-index: 1000;
     display: flex;
@@ -20,7 +19,7 @@
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(94, 106, 210, 0.2);
+    box-shadow: var(--shadow-lg);
     animation: slideUp var(--transition-fast);
 }
 
@@ -29,14 +28,14 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-lg);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-subtle);
     padding-bottom: var(--spacing-sm);
 }
 
 .dialog-header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: var(--accent-secondary);
+    color: var(--accent-primary);
 }
 
 .close-btn {
@@ -66,7 +65,13 @@
     gap: var(--spacing-md);
     margin-top: var(--spacing-lg);
     padding-top: var(--spacing-md);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.error-msg {
+    color: var(--status-hold);
+    font-size: 0.9rem;
+    padding: 0 var(--spacing-md);
 }
 
 @keyframes fadeIn {
@@ -89,6 +94,16 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Custom Scrollbar for Dialog */
+.dialog-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 3px;
 }
 
 /* Custom Scrollbar for Dialog */

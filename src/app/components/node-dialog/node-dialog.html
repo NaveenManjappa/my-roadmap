@@ -28,15 +28,17 @@
       </div>
 
       <!-- Status (only shown in edit mode) -->
-      <div class="form-group" *ngIf="isEditMode">
-        <label class="form-label">Status</label>
-        <select class="form-input" [(ngModel)]="status">
-          <option [ngValue]="StatusEnum.PLANNING">📋 Planning</option>
-          <option [ngValue]="StatusEnum.PROGRESS">🔥 In Progress</option>
-          <option [ngValue]="StatusEnum.HOLD">⏸ On Hold</option>
-          <option [ngValue]="StatusEnum.COMPLETED">✅ Completed</option>
-        </select>
-      </div>
+      @if (isEditMode) {
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" [(ngModel)]="status">
+            <option [ngValue]="StatusEnum.PLANNING">📋 Planning</option>
+            <option [ngValue]="StatusEnum.PROGRESS">🔥 In Progress</option>
+            <option [ngValue]="StatusEnum.HOLD">⏸ On Hold</option>
+            <option [ngValue]="StatusEnum.COMPLETED">✅ Completed</option>
+          </select>
+        </div>
+      }
 
       <div class="row">
         <div class="form-group half-width">
@@ -73,13 +75,14 @@
       </div>
     </div>
 
-    <div
-      *ngIf="errorMessage"
-      class="error-msg"
-      style="color: #e91e63; font-size: 0.9rem; padding: 0 16px"
-    >
-      {{ errorMessage }}
-    </div>
+    @if (errorMessage) {
+      <div
+        class="error-msg"
+        role="alert"
+      >
+        {{ errorMessage }}
+      </div>
+    }
 
     <div class="dialog-footer">
       <button class="btn-secondary" (click)="close.emit()" [disabled]="isSubmitting">Cancel</button>

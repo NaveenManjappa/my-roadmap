@@ -1,14 +1,14 @@
-import { Component, inject, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-auth',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './auth.html',
-  styleUrls: ['./auth.css']
+  styleUrls: ['./auth.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Auth implements OnInit {
   private authService = inject(AuthService);

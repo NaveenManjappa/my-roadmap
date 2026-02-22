@@ -7,11 +7,16 @@
 
     <div class="auth-body">
       <button class="btn-primary google-btn" (click)="loginWithGoogle()" [disabled]="isLoading">
-        <span *ngIf="!isLoading">Sign in with Google</span>
-        <span *ngIf="isLoading">Signing in...</span>
+        @if (!isLoading) {
+          <span>Sign in with Google</span>
+        } @else {
+          <span>Signing in...</span>
+        }
       </button>
-      
-      <p *ngIf="errorMsg" class="error-msg">{{ errorMsg }}</p>
+
+      @if (errorMsg) {
+        <p class="error-msg" role="alert">{{ errorMsg }}</p>
+      }
     </div>
   </div>
 </div>

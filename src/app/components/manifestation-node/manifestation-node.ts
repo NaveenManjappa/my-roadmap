@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ManifestationNode, LevelEnum, StatusEnum } from '../../shared/models/manifestation.model';
 import { ManifestationService } from '../../core/services/manifestation.service';
@@ -6,10 +6,10 @@ import { ProgressService } from '../../core/services/progress.service';
 
 @Component({
   selector: 'app-manifestation-node',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './manifestation-node.html',
-  styleUrls: ['./manifestation-node.css']
+  styleUrls: ['./manifestation-node.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManifestationNodeComponent {
   @Input() node!: ManifestationNode;
