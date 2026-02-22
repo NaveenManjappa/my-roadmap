@@ -1,0 +1,150 @@
+.dashboard-container {
+    min-height: 100vh;
+    padding: var(--spacing-md);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.logo {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(255, 193, 7, 0.5));
+}
+
+.brand h2 {
+    margin: 0;
+    background: linear-gradient(135deg, #fff, var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.5rem;
+}
+
+.stats {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.points-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.points-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--accent-secondary);
+    letter-spacing: 1px;
+}
+
+.points-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px var(--accent-primary);
+}
+
+/* Timeline Core */
+.timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+    padding: 0 var(--spacing-md);
+    position: relative;
+}
+
+/* Timeline Visual Connection Line */
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2rem;
+    width: 4px;
+    background: linear-gradient(to bottom,
+            rgba(94, 106, 210, 0.2),
+            var(--accent-secondary),
+            var(--success-color));
+    z-index: -1;
+    border-radius: 4px;
+}
+
+.staircase-level {
+    padding: var(--spacing-lg);
+    position: relative;
+    transition: transform var(--transition-smooth);
+    margin-left: 2rem;
+}
+
+.level-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.level-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+/* Specific Level Styling */
+.blueprints {
+    border-left: 4px solid var(--accent-primary);
+    opacity: 0.8;
+    background: linear-gradient(to right, rgba(26, 29, 36, 0.8), transparent);
+}
+
+.blueprints h3 {
+    color: var(--text-secondary);
+}
+
+.active-builds {
+    border-left: 4px solid var(--accent-secondary);
+    background: linear-gradient(to right, rgba(0, 210, 255, 0.05), transparent);
+    box-shadow: 0 0 40px rgba(0, 210, 255, 0.05);
+    border-radius: var(--border-radius-lg);
+    transform: scale(1.02);
+    /* Pop out the active section slightly */
+}
+
+.hall-of-fame {
+    border-left: 4px solid var(--success-color);
+    background: linear-gradient(to right, rgba(0, 230, 118, 0.05), transparent);
+}
+
+.empty-state {
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-surface-elevated);
+    border-radius: var(--border-radius-md);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    margin-top: var(--spacing-md);
+}
+
+.nodes-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}

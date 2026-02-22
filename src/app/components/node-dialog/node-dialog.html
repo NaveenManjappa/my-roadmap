@@ -1,0 +1,70 @@
+<div class="dialog-backdrop" (click)="close.emit()">
+    <div class="dialog-content glass-panel" (click)="$event.stopPropagation()">
+
+        <div class="dialog-header">
+            <h2>Create New {{ getLevelName(level) }}</h2>
+            <button class="close-btn" (click)="close.emit()">×</button>
+        </div>
+
+        <div class="dialog-body">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" [(ngModel)]="title" placeholder="e.g. Master Angular Framework"
+                    autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description / Vision</label>
+                <textarea class="form-input" rows="3" [(ngModel)]="description"
+                    placeholder="Why is this important?"></textarea>
+            </div>
+
+            <div class="row">
+                <div class="form-group half-width">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" class="form-input" [(ngModel)]="dueDate">
+                </div>
+
+                <div class="form-group half-width">
+                    <label class="form-label">Reference URL</label>
+                    <input type="url" class="form-input" [(ngModel)]="url" placeholder="https://...">
+                </div>
+            </div>
+
+            <!-- Custom Fields Example Usage -->
+            <div class="row">
+                <div class="form-group half-width">
+                    <label class="form-label">Priority</label>
+                    <select class="form-input" [(ngModel)]="priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical ⚡</option>
+                    </select>
+                </div>
+
+                <div class="form-group half-width">
+                    <label class="form-label">Effort Level</label>
+                    <select class="form-input" [(ngModel)]="effort">
+                        <option value="Trivial">Trivial</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Massive">Massive (Grind)</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <div *ngIf="errorMessage" class="error-msg" style="color: #e91e63; font-size: 0.9rem; padding: 0 16px;">
+            {{ errorMessage }}
+        </div>
+
+        <div class="dialog-footer">
+            <button class="btn-secondary" (click)="close.emit()" [disabled]="isSubmitting">Cancel</button>
+            <button class="btn-primary" (click)="save()" [disabled]="isSubmitting || !title.trim()">
+                {{ isSubmitting ? 'Architecting...' : 'Build It' }}
+            </button>
+        </div>
+
+    </div>
+</div>

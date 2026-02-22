@@ -1,0 +1,86 @@
+<div class="node-card"
+    [ngClass]="[getLevelClass(), node.status === StatusEnum.COMPLETED ? 'animate-trophy-pop completed-node' : '', isActive ? 'active-node' : '']">
+
+    <!-- Card Header -->
+    <div class="node-header" (click)="toggleExpand()">
+        <div class="node-title-area">
+            <span class="level-badge">{{ getLevelName(node.level) }}</span>
+            <select class="status-select" [value]="node.status" (change)="changeStatus($event)"
+                (click)="$event.stopPropagation()">
+                <option [value]="StatusEnum.PLANNING">PLANNING</option>
+                <option [value]="StatusEnum.PROGRESS">IN PROGRESS</option>
+                <option [value]="StatusEnum.HOLD">ON HOLD</option>
+                <option [value]="StatusEnum.COMPLETED">COMPLETED</option>
+            </select>
+            <h4 class="title">{{ node.title }}</h4>
+            <span class="points-earned" *ngIf="node.status === StatusEnum.COMPLETED">+{{ node.points }} pts 🏆</span>
+        </div>
+
+        <div class="header-actions">
+            <!-- Progress Ring (Simulated with simple text/bar for now) -->
+            <div class="progress-indicator" *ngIf="node.status !== StatusEnum.COMPLETED && children.length > 0">
+                <span class="progress-text">{{ node.progress }}%</span>
+            </div>
+
+            <button class="expand-btn" *ngIf="node.level !== LevelEnum.SUB_TASK">
+                <span class="icon">{{ isExpanded ? '▼' : '►' }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Bar (Visual) -->
+    <div class="progress-bar-container"
+        *ngIf="node.status !== StatusEnum.COMPLETED && node.level !== LevelEnum.SUB_TASK">
+        <div class="progress-bar" [style.width.%]="node.progress"></div>
+    </div>
+
+    <!-- Expanded Content Area -->
+    <div class="node-body" *ngIf="isExpanded">
+
+        <div class="metadata">
+            <p class="description" *ngIf="node.description">{{ node.description }}</p>
+
+            <div class="badges">
+                <a *ngIf="node.url" [href]="node.url" target="_blank" class="badge link"
+                    (click)="$event.stopPropagation()">🔗 Reference</a>
+                <span class="badge date" *ngIf="node.dueDate">📅 {{ node.dueDate | date:'mediumDate' }}</span>
+                <span class="badge custom" *ngIf="node.customField1">{{ node.customField1 }}</span>
+                <span class="badge custom" *ngIf="node.customField2">{{ node.customField2 }}</span>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar" *ngIf="node.status !== StatusEnum.COMPLETED">
+            <button class="btn-action start-btn" *ngIf="node.status === StatusEnum.PLANNING"
+                (click)="startBuild(); $event.stopPropagation()">
+                ▶ Start {{ getLevelName(node.level) }}
+            </button>
+
+            <button class="btn-secondary" *ngIf="node.level !== LevelEnum.SUB_TASK"
+                (click)="openAddChildDialog(); $event.stopPropagation()">
+                + Add {{ getLevelName(node.level + 1) }}
+            </button>
+
+            <button class="btn-action complete-btn" *ngIf="node.status === StatusEnum.PROGRESS || children.length === 0"
+                (click)="markAsCompleted(); $event.stopPropagation()">
+                ✓ Complete {{ getLevelName(node.level) }}
+            </button>
+        </div>
+
+        <!-- Recursive Children Render -->
+        <div class="children-list" *ngIf="children.length > 0">
+            <app-manifestation-node *ngFor="let child of children" [node]="child" [isActive]="isActive"
+                (updated)="onChildUpdated()">
+            </app-manifestation-node>
+        </div>
+
+        <div class="loading-state" *ngIf="isLoadingChildren">Loading structure...</div>
+
+    </div> <!-- /node-body -->
+
+</div> <!-- /node-card -->
+
+<!-- Recursive Dialog for inner children (Outside of transformed node-card) -->
+<app-node-dialog *ngIf="showDialog" [level]="dialogLevel" [parentId]="node.id!" (close)="closeDialog()"
+    (saved)="onChildCreated()">
+</app-node-dialog>

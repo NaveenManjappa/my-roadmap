@@ -1,1 +1,179 @@
-/* You can add global styles to this file, and also import other style files */
+/* C:\Products\my-roadmap\src\styles.css */
+
+/* ======= DESIGN SYSTEM: THE MAIFESTATION ARCHITECT ======= */
+
+:root {
+  /* Color Palette - Premium Dark Mode */
+  --bg-core: #0f1115;
+  --bg-surface: #1a1d24;
+  --bg-surface-elevated: #252a33;
+  --text-primary: #f0f2f5;
+  --text-secondary: #9aa0a6;
+  --accent-primary: #5e6ad2;       /* Vibrant Purple/Blue */
+  --accent-secondary: #00d2ff;     /* Cyan Glow */
+  --success-color: #00e676;        /* Bright Green */
+  --trophy-gold: #ffc107;          /* Trophy Glow */
+  
+  /* Status Colors */
+  --status-planning: #6c757d;      /* Gray */
+  --status-progress: var(--accent-secondary); /* Cyan */
+  --status-completed: var(--success-color);   /* Green */
+
+  /* Level Indicators (For Hierarchy) */
+  --level-1: #e91e63; /* Roadmap - Pink */
+  --level-2: #9c27b0; /* Project - Purple */
+  --level-3: #2196f3; /* Sub-Project - Blue */
+  --level-4: #00bcd4; /* Task - Cyan */
+  --level-5: #4caf50; /* Sub-Task - Green */
+
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Sizes & Layout */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Shadows & Glows */
+  --shadow-subtle: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 15px rgba(94, 106, 210, 0.4);
+  --shadow-trophy: 0 0 20px rgba(255, 193, 7, 0.6);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-smooth: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Global Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-family-base);
+  background-color: var(--bg-core);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--text-primary);
+}
+
+button {
+  font-family: var(--font-family-base);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+/* ======= UTILITY CLASSES ======= */
+
+/* Containers */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.glass-panel {
+  background: rgba(26, 29, 36, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  box-shadow: var(--shadow-subtle);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-secondary {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.form-input {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-family-base);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus {
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+  outline: none;
+}
+
+/* Animations */
+@keyframes trophy-pop {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.2); filter: brightness(1.5) drop-shadow(0 0 10px var(--trophy-gold)); }
+  100% { transform: scale(1); filter: brightness(1) drop-shadow(var(--shadow-trophy)); color: var(--trophy-gold); }
+}
+
+.animate-trophy-pop {
+  animation: trophy-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
